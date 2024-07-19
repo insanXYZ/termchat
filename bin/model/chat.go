@@ -2,6 +2,13 @@ package model
 
 import "github.com/rivo/tview"
 
+type Type string
+
+const (
+	MessageGlobal  Type = "global"
+	MessagePrivate Type = "private"
+)
+
 type WriteMessage struct {
 	Message  string `json:"message"`
 	Receiver string `json:"receiver"`
@@ -12,7 +19,7 @@ type ReadMessage struct {
 	Receiver *ReceiverMessage `json:"receiver"`
 	Message  string           `json:"message"`
 	Time     string           `json:"time"`
-	Type     string           `json:"type"`
+	Type     Type             `json:"type"`
 }
 
 type SenderMessage struct {

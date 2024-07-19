@@ -33,9 +33,6 @@ func (e *Engine) login() tview.Primitive {
 				textview.SetText(err.Error())
 				return
 			}
-			e.setHub("base", model.CompHub{
-				Chan: make(chan any),
-			})
 
 			e.winman.NewWindow().
 				SetRoot(e.chat()).

@@ -3,6 +3,7 @@ package engine
 import (
 	"bin-term-chat/model"
 	"encoding/json"
+	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/gorilla/websocket"
 	"github.com/rivo/tview"
@@ -48,6 +49,8 @@ func (e *Engine) readMessage() {
 				log.Println(err.Error())
 			}
 
+			e.app.Stop()
+			fmt.Println(response)
 		}
 	}
 }
@@ -70,12 +73,13 @@ func (e *Engine) listSidebar() *tview.List {
 	go func() {
 		for {
 			select {
-			case data := <-e.compHub["base"].Chan:
+			case data := <-e.compHub["sidebar"].Chan:
 				user := data.(model.User)
 
 				e.app.QueueUpdateDraw(func() {
 					list.AddItem(user.Name, "", 0, func() {
 						e.receiver = user.ID
+						e.compHub["base"].Chan <- e.receiver
 					})
 				})
 			}
@@ -95,7 +99,22 @@ func (e *Engine) setInputCapture(list *tview.Box, fallback tview.Primitive) {
 	})
 }
 
+func (e *Engine) initChanCompChat() {
+	e.setHub("sidebar", model.CompHub{
+		Chan: make(chan any), // model.User
+	})
+	e.setHub("chat-switch", model.CompHub{
+		Chan: make(chan any), // string
+	})
+	e.setHub("chat-global", model.CompHub{
+		Comp: e.chatBox("global"),
+		Chan: make(chan any), // model.ReadMessage
+	})
+}
+
 func (e *Engine) chat() tview.Primitive {
+
+	e.initChanCompChat()
 
 	sidebar := e.listSidebar()
 	banner := e.banner()
@@ -106,6 +125,22 @@ func (e *Engine) chat() tview.Primitive {
 
 	e.setInputCapture(sidebar.Box, flex.GetItem(1))
 	e.setInputCapture(banner.Box, sidebar)
+
+	go func() {
+		for {
+			select {
+			case id := <-e.compHub["chat"].Chan:
+				if c, ok := e.compHub[id.(string)]; ok {
+					e.app.QueueUpdateDraw(func() {
+						flex.RemoveItem(flex.GetItem(1))
+						flex.AddItem(c.Comp, 0, 3, true)
+						e.setInputCapture(sidebar.Box, flex.GetItem(1))
+					})
+					e.setFocus(flex.GetItem(1))
+				}
+			}
+		}
+	}()
 
 	return flex
 
@@ -140,6 +175,26 @@ func (e *Engine) chatBox(idHub string) tview.Primitive {
 	sendButton.SetSelectedFunc(func() {
 		e.sendMessage(inputField, chatBox)
 	})
+
+	go func() {
+		for {
+			select {
+			case msg := <-e.compHub[idHub].Chan:
+				message := msg.(model.ReadMessage)
+
+				headMessage := "[green]" + message.Time
+
+				if message.Sender.ID == e.user.ID {
+					headMessage = "You " + headMessage
+				} else {
+					headMessage = message.Sender.Name + " [blue]#" + message.Sender.ID + " " + headMessage
+				}
+
+				chatBox.Write([]byte(headMessage + "\n" + message.Message + "\n\n"))
+
+			}
+		}
+	}()
 
 	return flex
 
