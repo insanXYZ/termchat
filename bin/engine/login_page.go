@@ -34,12 +34,14 @@ func (e *Engine) login() tview.Primitive {
 				return
 			}
 
+			go e.readMessage()
+
 			e.winman.NewWindow().
 				SetRoot(e.chat()).
 				Maximize().
 				Show().
 				SetBorder(false)
-
+			
 			e.setRoot(e.winman)
 
 		}).

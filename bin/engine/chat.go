@@ -3,17 +3,21 @@ package engine
 import (
 	"bin-term-chat/model"
 	"encoding/json"
-	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/gorilla/websocket"
 	"github.com/rivo/tview"
 	"log"
+	"strings"
 )
+
+type SetPrivateMessage struct {
+	id   string
+	user model.User
+}
 
 func (e *Engine) sendMessage(field *tview.InputField, chatBox *tview.TextView) {
 	message := field.GetText()
 	if message != "" && e.conn != nil {
-
 		marshal, err := json.Marshal(model.WriteMessage{
 			Message:  message,
 			Receiver: e.receiver,
@@ -41,16 +45,46 @@ func (e *Engine) readMessage() {
 				log.Println(err.Error())
 			}
 
-			var response model.ReadMessage
+			var readM model.ReadMessage
 
-			err = json.Unmarshal(message, &response)
+			err = json.Unmarshal(message, &readM)
 			if err != nil {
 				e.app.Stop()
 				log.Println(err.Error())
 			}
 
-			e.app.Stop()
-			fmt.Println(response)
+			if readM.Type == "global" {
+				e.compHub["global"].Chan <- readM
+			} else if readM.Type == "private" {
+
+				set := SetPrivateMessage{}
+
+				if readM.Sender.ID == e.user.ID {
+					set.id = readM.Receiver.ID
+					set.user = model.User{
+						Name: readM.Receiver.Name,
+						ID:   readM.Receiver.ID,
+					}
+				} else {
+					set.id = readM.Sender.ID
+					set.user = model.User{
+						Name: readM.Sender.Name,
+						ID:   readM.Sender.ID,
+					}
+				}
+
+				if _, ok := e.compHub[set.id]; !ok {
+					e.compHub[set.id] = model.CompHub{
+						Comp: e.chatBox(set.id, set.user.Name),
+						Chan: make(chan any),
+					}
+					e.compHub["sidebar"].Chan <- set.user
+				}
+
+				e.compHub[set.id].Chan <- readM
+
+			}
+
 		}
 	}
 }
@@ -67,7 +101,12 @@ func (e *Engine) banner() *tview.Flex {
 func (e *Engine) listSidebar() *tview.List {
 	list := tview.NewList()
 	list.AddItem("🔎 Search friend", "", 0, nil)
-	list.AddItem("🌎 global", "", 0, nil)
+	list.AddItem(strings.Repeat(string(tcell.RuneHLine), 30), "", 0, nil)
+	list.AddItem("🌎 global", "", 0, func() {
+		e.receiver = "global"
+		e.compHub["chat"].Chan <- "global"
+	})
+	list.SetTitle("👥 Chat Menu")
 	list.SetBorder(true)
 
 	go func() {
@@ -79,7 +118,7 @@ func (e *Engine) listSidebar() *tview.List {
 				e.app.QueueUpdateDraw(func() {
 					list.AddItem(user.Name, "", 0, func() {
 						e.receiver = user.ID
-						e.compHub["base"].Chan <- e.receiver
+						e.compHub["chat"].Chan <- e.receiver
 					})
 				})
 			}
@@ -103,10 +142,10 @@ func (e *Engine) initChanCompChat() {
 	e.setHub("sidebar", model.CompHub{
 		Chan: make(chan any), // model.User
 	})
-	e.setHub("chat-switch", model.CompHub{
+	e.setHub("chat", model.CompHub{
 		Chan: make(chan any), // string
 	})
-	e.setHub("chat-global", model.CompHub{
+	e.setHub("global", model.CompHub{
 		Comp: e.chatBox("global"),
 		Chan: make(chan any), // model.ReadMessage
 	})
@@ -146,9 +185,8 @@ func (e *Engine) chat() tview.Primitive {
 
 }
 
-func (e *Engine) chatBox(idHub string) tview.Primitive {
+func (e *Engine) chatBox(idHub string, title ...string) tview.Primitive {
 	chatBox := tview.NewTextView().SetDynamicColors(true).SetRegions(true).SetWordWrap(true)
-	chatBox.SetTitle(idHub)
 
 	inputField := tview.NewInputField().
 		SetLabelColor(tcell.ColorWhite).
@@ -172,6 +210,14 @@ func (e *Engine) chatBox(idHub string) tview.Primitive {
 		AddItem(inputFlex, 1, 0, true)
 	flex.SetBorder(true)
 
+	t := idHub
+
+	if len(title) != 0 {
+		t = title[0]
+	}
+
+	flex.SetTitle("💬 " + t)
+
 	sendButton.SetSelectedFunc(func() {
 		e.sendMessage(inputField, chatBox)
 	})
@@ -182,7 +228,7 @@ func (e *Engine) chatBox(idHub string) tview.Primitive {
 			case msg := <-e.compHub[idHub].Chan:
 				message := msg.(model.ReadMessage)
 
-				headMessage := "[green]" + message.Time
+				headMessage := "[green]" + message.Time + ":"
 
 				if message.Sender.ID == e.user.ID {
 					headMessage = "You " + headMessage
@@ -190,7 +236,9 @@ func (e *Engine) chatBox(idHub string) tview.Primitive {
 					headMessage = message.Sender.Name + " [blue]#" + message.Sender.ID + " " + headMessage
 				}
 
-				chatBox.Write([]byte(headMessage + "\n" + message.Message + "\n\n"))
+				e.app.QueueUpdateDraw(func() {
+					chatBox.Write([]byte(headMessage + "\n[white]" + message.Message + "\n\n"))
+				})
 
 			}
 		}
