@@ -53,9 +53,9 @@ func (e *Engine) readMessage() {
 				log.Println(err.Error())
 			}
 
-			if readM.Type == "global" {
+			if readM.Type == model.MessageGlobal {
 				e.compHub["global"].Chan <- readM
-			} else if readM.Type == "private" {
+			} else if readM.Type == model.MessagePrivate {
 
 				set := SetPrivateMessage{}
 
@@ -98,14 +98,46 @@ func (e *Engine) banner() *tview.Flex {
 	return flex
 }
 
+func (e *Engine) showModalSearchFriend() {
+
+	var id string
+
+	form := tview.NewForm().
+		AddInputField("id", "", 40, nil, func(text string) {
+			id = text
+		}).
+		AddButton("search", func() {
+
+		})
+
+	e.CreateModal(&modalConfig{
+		root:            content,
+		title:           "Test doang",
+		draggable:       true,
+		resizeable:      true,
+		fallback:        list,
+		backgroundColor: tcell.ColorGrey,
+		size: size{
+			x:      5,
+			y:      5,
+			width:  30,
+			height: 10,
+		},
+	})
+}
+
+func (e *Engine) switchChatBox(idHub string) func() {
+	return func() {
+		e.receiver = idHub
+		e.compHub["chat"].Chan <- e.receiver
+	}
+}
+
 func (e *Engine) listSidebar() *tview.List {
 	list := tview.NewList()
-	list.AddItem("🔎 Search friend", "", 0, nil)
+	list.AddItem("🔎 Search friend", "", 0, e.showModalSearchFriend)
 	list.AddItem(strings.Repeat(string(tcell.RuneHLine), 30), "", 0, nil)
-	list.AddItem("🌎 global", "", 0, func() {
-		e.receiver = "global"
-		e.compHub["chat"].Chan <- "global"
-	})
+	list.AddItem("🌎 global", "", 0, e.switchChatBox("global"))
 	list.SetTitle("👥 Chat Menu")
 	list.SetBorder(true)
 
