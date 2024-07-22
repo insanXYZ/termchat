@@ -80,7 +80,22 @@ func (e *Engine) setAuthEngine(data map[string]any) {
 }
 
 func (e *Engine) setHub(index string, value model.CompHub) {
-	e.compHub[index] = value
+	if _, ok := e.compHub[index]; !ok {
+		e.compHub[index] = value
+	}
+}
+
+func (e *Engine) setCompHub(index string) {
+	e.setHub(index, model.CompHub{
+		Comp: e.chatBox(index),
+		Chan: make(chan any),
+	})
+}
+
+func (e *Engine) setChanHub(index string) {
+	e.setHub(index, model.CompHub{
+		Chan: make(chan any),
+	})
 }
 
 func (e *Engine) setRoot(c tview.Primitive) {

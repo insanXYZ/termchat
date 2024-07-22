@@ -4,7 +4,6 @@ import (
 	"bin-term-chat/model"
 	"bytes"
 	"encoding/json"
-	"errors"
 	"net/http"
 )
 
@@ -14,23 +13,9 @@ func (h *Handler) Login(req *model.ReqLogin) (*model.Response, error) {
 		return nil, err
 	}
 
-	httpresp, err := http.Post(h.Url+"/api/login", "application/json", bytes.NewReader(marshal))
-	if err != nil {
-		return nil, err
-	}
-
-	resp := new(model.Response)
-
-	err = json.NewDecoder(httpresp.Body).Decode(resp)
-	if err != nil {
-		return nil, err
-	}
-
-	if httpresp.StatusCode > 399 {
-		return nil, errors.New(resp.Message)
-	}
-
-	return resp, nil
+	return h.NewRequest(http.MethodPost, h.Url+"/api/login", bytes.NewReader(marshal), func(request *http.Request) {
+		request.Header.Set("Content-Type", "application/json")
+	})
 
 }
 
@@ -40,22 +25,8 @@ func (h *Handler) Register(req *model.ReqRegister) (*model.Response, error) {
 		return nil, err
 	}
 
-	httpresp, err := http.Post(h.Url+"/api/register", "application/json", bytes.NewReader(marshal))
-	if err != nil {
-		return nil, err
-	}
-
-	resp := new(model.Response)
-
-	err = json.NewDecoder(httpresp.Body).Decode(resp)
-	if err != nil {
-		return nil, err
-	}
-
-	if httpresp.StatusCode > 399 {
-		return nil, errors.New(resp.Message)
-	}
-
-	return resp, nil
+	return h.NewRequest(http.MethodPost, h.Url+"/api/register", bytes.NewReader(marshal), func(request *http.Request) {
+		request.Header.Set("Content-Type", "application/json")
+	})
 
 }

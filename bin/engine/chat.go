@@ -3,6 +3,7 @@ package engine
 import (
 	"bin-term-chat/model"
 	"encoding/json"
+	"github.com/epiclabs-io/winman"
 	"github.com/gdamore/tcell/v2"
 	"github.com/gorilla/websocket"
 	"github.com/rivo/tview"
@@ -98,32 +99,68 @@ func (e *Engine) banner() *tview.Flex {
 	return flex
 }
 
+func (e *Engine) modalSearchFriend(window *winman.WindowBase) *tview.Flex {
+	inputField := tview.NewInputField()
+	result := tview.NewFlex()
+
+	inputField.SetFieldWidth(50)
+	inputField.SetFieldBackgroundColor(tcell.ColorDarkGrey)
+	inputField.SetPlaceholder("id...")
+
+	inputField.SetPlaceholderTextColor(tcell.ColorDarkGreen)
+	inputField.SetDoneFunc(func(key tcell.Key) {
+		if key == tcell.KeyEnter {
+			id := inputField.GetText()
+
+			httpresp, err := e.handler.GetUserWithId(id, e.token)
+			if err != nil {
+				if result.GetItemCount() > 0 {
+					result.RemoveItem(result.GetItem(0))
+				}
+				result.AddItem(tview.NewTextView().SetText(err.Error()), 0, 1, true)
+				return
+			}
+
+			data := httpresp.Data.(map[string]interface{})
+			if result.GetItemCount() > 0 {
+				result.RemoveItem(result.GetItem(0))
+			}
+			result.AddItem(tview.NewButton(data["name"].(string)).SetSelectedFunc(func() {
+				e.setCompHub(id)
+				e.closeModal(window, e.listSidebar())
+				e.switchChatBox(id)
+			}), 0, 1, true)
+
+		}
+	})
+
+	flex := tview.NewFlex()
+	flex.SetDirection(tview.FlexRow)
+	flex.AddItem(inputField, 1, 1, true)
+	flex.AddItem(tview.NewBox().SetBackgroundColor(tcell.ColorGrey), 1, 0, false) // Add this line for the gap
+	flex.AddItem(result, 0, 1, false)
+
+	return flex
+
+}
+
 func (e *Engine) showModalSearchFriend() {
-
-	var id string
-
-	form := tview.NewForm().
-		AddInputField("id", "", 40, nil, func(text string) {
-			id = text
-		}).
-		AddButton("search", func() {
-
-		})
-
-	e.CreateModal(&modalConfig{
-		root:            content,
-		title:           "Test doang",
+	modal := e.CreateModal(&modalConfig{
+		title:           "🔎 search friend",
 		draggable:       true,
+		border:          true,
 		resizeable:      true,
-		fallback:        list,
+		fallback:        e.listSidebar(),
 		backgroundColor: tcell.ColorGrey,
 		size: size{
-			x:      5,
-			y:      5,
-			width:  30,
-			height: 10,
+			x:      0,
+			y:      0,
+			width:  50,
+			height: 7,
 		},
 	})
+	modal.SetBorderPadding(1, 1, 1, 1)
+	modal.SetRoot(e.modalSearchFriend(modal))
 }
 
 func (e *Engine) switchChatBox(idHub string) func() {
@@ -148,10 +185,7 @@ func (e *Engine) listSidebar() *tview.List {
 				user := data.(model.User)
 
 				e.app.QueueUpdateDraw(func() {
-					list.AddItem(user.Name, "", 0, func() {
-						e.receiver = user.ID
-						e.compHub["chat"].Chan <- e.receiver
-					})
+					list.AddItem(user.Name, "", 0, e.switchChatBox(user.ID))
 				})
 			}
 		}
@@ -171,16 +205,9 @@ func (e *Engine) setInputCapture(list *tview.Box, fallback tview.Primitive) {
 }
 
 func (e *Engine) initChanCompChat() {
-	e.setHub("sidebar", model.CompHub{
-		Chan: make(chan any), // model.User
-	})
-	e.setHub("chat", model.CompHub{
-		Chan: make(chan any), // string
-	})
-	e.setHub("global", model.CompHub{
-		Comp: e.chatBox("global"),
-		Chan: make(chan any), // model.ReadMessage
-	})
+	e.setChanHub("sidebar")
+	e.setChanHub("chat")
+	e.setCompHub("global")
 }
 
 func (e *Engine) chat() tview.Primitive {

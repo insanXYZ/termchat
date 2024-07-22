@@ -11,15 +11,15 @@ type size struct {
 }
 
 type modalConfig struct {
-	root                  tview.Primitive
-	title                 string
-	draggable, resizeable bool
-	fallback              tview.Primitive
-	backgroundColor       tcell.Color
-	size                  size
+	root                          tview.Primitive
+	title                         string
+	border, draggable, resizeable bool
+	fallback                      tview.Primitive
+	backgroundColor               tcell.Color
+	size                          size
 }
 
-func (e *Engine) CreateModal(config *modalConfig) {
+func (e *Engine) CreateModal(config *modalConfig) *winman.WindowBase {
 	wnd := winman.NewWindow().Show()
 	wnd.SetTitle(config.title)
 	wnd.SetRoot(config.root)
@@ -27,6 +27,7 @@ func (e *Engine) CreateModal(config *modalConfig) {
 	wnd.SetResizable(config.resizeable)
 	wnd.SetModal(true)
 	wnd.SetBackgroundColor(config.backgroundColor)
+	wnd.SetBorder(config.border)
 
 	wnd.SetRect(config.size.x, config.size.y, config.size.width, config.size.height)
 	wnd.AddButton(&winman.Button{
@@ -39,6 +40,8 @@ func (e *Engine) CreateModal(config *modalConfig) {
 	e.winman.AddWindow(wnd)
 	e.winman.Center(wnd)
 	e.setFocus(wnd)
+
+	return wnd
 
 }
 
