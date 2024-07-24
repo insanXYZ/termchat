@@ -127,8 +127,12 @@ func (e *Engine) modalSearchFriend(window *winman.WindowBase) *tview.Flex {
 			}
 			result.AddItem(tview.NewButton(data["name"].(string)).SetSelectedFunc(func() {
 				e.setCompHub(id)
-				e.closeModal(window, e.listSidebar())
-				e.switchChatBox(id)
+				e.closeModal(window, e.chat().GetItem(0))
+				e.compHub["sidebar"].Chan <- model.User{
+					Name: data["name"].(string),
+					ID:   data["id"].(string),
+				}
+				e.switchChatBox(id)()
 			}), 0, 1, true)
 
 		}
@@ -210,7 +214,7 @@ func (e *Engine) initChanCompChat() {
 	e.setCompHub("global")
 }
 
-func (e *Engine) chat() tview.Primitive {
+func (e *Engine) chat() *tview.Flex {
 
 	e.initChanCompChat()
 
