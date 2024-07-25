@@ -13,16 +13,17 @@ import (
 var StyleTextView = tcell.StyleDefault.Italic(true)
 
 type Engine struct {
-	app      *tview.Application
-	pages    *tview.Pages
-	winman   *winman.Manager
-	handler  *handler.Handler
-	conn     *websocket.Conn
-	user     *model.User
-	compHub  map[string]model.CompHub
-	url      string
-	receiver string
-	token    string
+	app            *tview.Application
+	pages          *tview.Pages
+	winman         *winman.Manager
+	handler        *handler.Handler
+	conn           *websocket.Conn
+	user           *model.User
+	chatCompLayout *model.ChatComponentLayout
+	compHub        map[string]model.CompHub
+	url            string
+	receiver       string
+	token          string
 }
 
 func NewEngine(url string) *Engine {
@@ -85,9 +86,9 @@ func (e *Engine) setHub(index string, value model.CompHub) {
 	}
 }
 
-func (e *Engine) setCompHub(index string) {
+func (e *Engine) setCompHub(index, title string) {
 	e.setHub(index, model.CompHub{
-		Comp: e.chatBox(index),
+		Comp: e.chatBox(index, title),
 		Chan: make(chan any),
 	})
 }

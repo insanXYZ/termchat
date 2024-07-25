@@ -9,6 +9,7 @@ type User struct {
 	ID        string    `gorm:"primaryKey;column:id"`
 	Name      string    `gorm:"column:name"`
 	Email     string    `gorm:"column:email"`
+	Bio       string    `gorm:"column:bio"`
 	Password  string    `gorm:"column:password"`
 	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt time.Time `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`

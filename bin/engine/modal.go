@@ -36,7 +36,6 @@ func (e *Engine) CreateModal(config *modalConfig) *winman.WindowBase {
 			e.closeModal(wnd, config.fallback)
 		},
 	})
-
 	e.winman.AddWindow(wnd)
 	e.winman.Center(wnd)
 	e.setFocus(wnd)

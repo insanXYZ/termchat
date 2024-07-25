@@ -41,7 +41,7 @@ func (controller *UserController) Login(c echo.Context) error {
 
 	user, token, err := controller.UserService.Login(req)
 	if err != nil {
-		return httpresponse.Error(c, err.Error(), nil)
+		return httpresponse.Error(c, "username or password wrong", nil)
 	}
 
 	cookie := new(http.Cookie)
@@ -51,7 +51,7 @@ func (controller *UserController) Login(c echo.Context) error {
 
 	c.SetCookie(cookie)
 
-	return httpresponse.Success(c, "success login", converter.UserToLoginToken(user, token))
+	return httpresponse.Success(c, "success login", converter.UserToLogin(user, token))
 
 }
 

@@ -42,6 +42,7 @@ func (service *UserService) Register(req *model.RegisterUser) error {
 			ID:       uuid.New().String(),
 			Name:     req.Name,
 			Email:    req.Email,
+			Bio:      "Hi, im use termchat",
 			Password: string(passwordByte),
 		}
 

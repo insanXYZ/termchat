@@ -33,6 +33,12 @@ type ReceiverMessage struct {
 }
 
 type CompHub struct {
-	Comp tview.Primitive
+	Comp *tview.Flex
 	Chan chan any
+}
+
+type ChatComponentLayout struct {
+	Banner  *tview.Flex
+	Sidebar *tview.List
+	ChatBox *tview.Flex
 }

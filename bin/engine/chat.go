@@ -3,15 +3,13 @@ package engine
 import (
 	"bin-term-chat/model"
 	"encoding/json"
-	"github.com/epiclabs-io/winman"
 	"github.com/gdamore/tcell/v2"
 	"github.com/gorilla/websocket"
 	"github.com/rivo/tview"
 	"log"
-	"strings"
 )
 
-type SetPrivateMessage struct {
+type setPrivateMessage struct {
 	id   string
 	user model.User
 }
@@ -58,7 +56,7 @@ func (e *Engine) readMessage() {
 				e.compHub["global"].Chan <- readM
 			} else if readM.Type == model.MessagePrivate {
 
-				set := SetPrivateMessage{}
+				set := setPrivateMessage{}
 
 				if readM.Sender.ID == e.user.ID {
 					set.id = readM.Receiver.ID
@@ -96,75 +94,10 @@ func (e *Engine) banner() *tview.Flex {
 		AddItem(tview.NewTextView().SetText(model.APPNAME).SetTextAlign(tview.AlignCenter), 1, 1, false).
 		AddItem(tview.NewBox(), 0, 1, false)
 	flex.SetBorder(true)
-	return flex
-}
-
-func (e *Engine) modalSearchFriend(window *winman.WindowBase) *tview.Flex {
-	inputField := tview.NewInputField()
-	result := tview.NewFlex()
-
-	inputField.SetFieldWidth(50)
-	inputField.SetFieldBackgroundColor(tcell.ColorDarkGrey)
-	inputField.SetPlaceholder("id...")
-
-	inputField.SetPlaceholderTextColor(tcell.ColorDarkGreen)
-	inputField.SetDoneFunc(func(key tcell.Key) {
-		if key == tcell.KeyEnter {
-			id := inputField.GetText()
-
-			httpresp, err := e.handler.GetUserWithId(id, e.token)
-			if err != nil {
-				if result.GetItemCount() > 0 {
-					result.RemoveItem(result.GetItem(0))
-				}
-				result.AddItem(tview.NewTextView().SetText(err.Error()), 0, 1, true)
-				return
-			}
-
-			data := httpresp.Data.(map[string]interface{})
-			if result.GetItemCount() > 0 {
-				result.RemoveItem(result.GetItem(0))
-			}
-			result.AddItem(tview.NewButton(data["name"].(string)).SetSelectedFunc(func() {
-				e.setCompHub(id)
-				e.closeModal(window, e.chat().GetItem(0))
-				e.compHub["sidebar"].Chan <- model.User{
-					Name: data["name"].(string),
-					ID:   data["id"].(string),
-				}
-				e.switchChatBox(id)()
-			}), 0, 1, true)
-
-		}
+	e.setInputCapture(flex.Box, func() {
+		e.setFocus(e.chatCompLayout.Sidebar)
 	})
-
-	flex := tview.NewFlex()
-	flex.SetDirection(tview.FlexRow)
-	flex.AddItem(inputField, 1, 1, true)
-	flex.AddItem(tview.NewBox().SetBackgroundColor(tcell.ColorGrey), 1, 0, false) // Add this line for the gap
-	flex.AddItem(result, 0, 1, false)
-
 	return flex
-
-}
-
-func (e *Engine) showModalSearchFriend() {
-	modal := e.CreateModal(&modalConfig{
-		title:           "🔎 search friend",
-		draggable:       true,
-		border:          true,
-		resizeable:      true,
-		fallback:        e.listSidebar(),
-		backgroundColor: tcell.ColorGrey,
-		size: size{
-			x:      0,
-			y:      0,
-			width:  50,
-			height: 7,
-		},
-	})
-	modal.SetBorderPadding(1, 1, 1, 1)
-	modal.SetRoot(e.modalSearchFriend(modal))
 }
 
 func (e *Engine) switchChatBox(idHub string) func() {
@@ -174,59 +107,38 @@ func (e *Engine) switchChatBox(idHub string) func() {
 	}
 }
 
-func (e *Engine) listSidebar() *tview.List {
-	list := tview.NewList()
-	list.AddItem("🔎 Search friend", "", 0, e.showModalSearchFriend)
-	list.AddItem(strings.Repeat(string(tcell.RuneHLine), 30), "", 0, nil)
-	list.AddItem("🌎 global", "", 0, e.switchChatBox("global"))
-	list.SetTitle("👥 Chat Menu")
-	list.SetBorder(true)
-
-	go func() {
-		for {
-			select {
-			case data := <-e.compHub["sidebar"].Chan:
-				user := data.(model.User)
-
-				e.app.QueueUpdateDraw(func() {
-					list.AddItem(user.Name, "", 0, e.switchChatBox(user.ID))
-				})
-			}
-		}
-	}()
-
-	return list
-}
-
-func (e *Engine) setInputCapture(list *tview.Box, fallback tview.Primitive) {
-	list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+func (e *Engine) setInputCapture(box *tview.Box, f func()) {
+	box.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
-		case tcell.KeyEscape:
-			e.setFocus(fallback)
+		case tcell.KeyEsc:
+			f()
 		}
 		return event
 	})
 }
 
 func (e *Engine) initChanCompChat() {
+
+	e.chatCompLayout = &model.ChatComponentLayout{
+		Banner:  e.banner(),
+		Sidebar: e.listSidebar(),
+		ChatBox: nil,
+	}
 	e.setChanHub("sidebar")
 	e.setChanHub("chat")
-	e.setCompHub("global")
+	e.setCompHub("global", "global")
 }
 
 func (e *Engine) chat() *tview.Flex {
 
 	e.initChanCompChat()
 
-	sidebar := e.listSidebar()
-	banner := e.banner()
+	sidebar := e.chatCompLayout.Sidebar
+	banner := e.chatCompLayout.Banner
 
 	flex := tview.NewFlex().
 		AddItem(sidebar, 30, 1, true).
 		AddItem(banner, 0, 3, false)
-
-	e.setInputCapture(sidebar.Box, flex.GetItem(1))
-	e.setInputCapture(banner.Box, sidebar)
 
 	go func() {
 		for {
@@ -236,73 +148,10 @@ func (e *Engine) chat() *tview.Flex {
 					e.app.QueueUpdateDraw(func() {
 						flex.RemoveItem(flex.GetItem(1))
 						flex.AddItem(c.Comp, 0, 3, true)
-						e.setInputCapture(sidebar.Box, flex.GetItem(1))
+						e.chatCompLayout.ChatBox = c.Comp
 					})
 					e.setFocus(flex.GetItem(1))
 				}
-			}
-		}
-	}()
-
-	return flex
-
-}
-
-func (e *Engine) chatBox(idHub string, title ...string) tview.Primitive {
-	chatBox := tview.NewTextView().SetDynamicColors(true).SetRegions(true).SetWordWrap(true)
-
-	inputField := tview.NewInputField().
-		SetLabelColor(tcell.ColorWhite).
-		SetLabel("Message: ")
-
-	inputField.SetDoneFunc(func(key tcell.Key) {
-		if key == tcell.KeyEnter {
-			e.sendMessage(inputField, chatBox)
-		}
-	})
-
-	sendButton := tview.NewButton("⌲").SetLabelColor(tcell.ColorWhite)
-	sendButton.SetBackgroundColor(tcell.ColorGreen)
-
-	inputFlex := tview.NewFlex().
-		AddItem(inputField, 0, 1, true).
-		AddItem(sendButton, 5, 0, false)
-
-	flex := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(chatBox, 0, 1, false).
-		AddItem(inputFlex, 1, 0, true)
-	flex.SetBorder(true)
-
-	t := idHub
-
-	if len(title) != 0 {
-		t = title[0]
-	}
-
-	flex.SetTitle("💬 " + t)
-
-	sendButton.SetSelectedFunc(func() {
-		e.sendMessage(inputField, chatBox)
-	})
-
-	go func() {
-		for {
-			select {
-			case msg := <-e.compHub[idHub].Chan:
-				message := msg.(model.ReadMessage)
-
-				headMessage := "[green]" + message.Time + ":"
-
-				if message.Sender.ID == e.user.ID {
-					headMessage = "You " + headMessage
-				} else {
-					headMessage = message.Sender.Name + " [blue]#" + message.Sender.ID + " " + headMessage
-				}
-
-				e.app.QueueUpdateDraw(func() {
-					chatBox.Write([]byte(headMessage + "\n[white]" + message.Message + "\n\n"))
-				})
-
 			}
 		}
 	}()
