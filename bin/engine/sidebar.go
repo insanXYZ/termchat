@@ -9,11 +9,12 @@ import (
 
 func (e *Engine) listSidebar() *tview.List {
 	list := tview.NewList()
-	list.AddItem("🔎 Search friend", "", 0, e.showModalSearchFriend)
+	list.AddItem(" 🔎 Search friend ", "", 0, e.showModalSearchFriend)
 	list.AddItem(strings.Repeat(string(tcell.RuneHLine), 30), "", 0, nil)
-	list.AddItem("🌎 global", "", 0, e.switchChatBox("global"))
-	list.SetTitle("👥 Chat Menu")
+	list.AddItem(" 🌎 global ", "", 0, e.switchChatBox("global"))
+	list.SetTitle(" 🍔 Menu ")
 	list.SetBorder(true)
+	list.SetBorderPadding(1, 0, 0, 0)
 
 	e.setInputCapture(list.Box, func() {
 		if e.chatCompLayout.ChatBox == nil {

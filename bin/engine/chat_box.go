@@ -8,10 +8,14 @@ import (
 
 func (e *Engine) chatBox(idHub, title string) *tview.Flex {
 	chatBox := tview.NewTextView().SetDynamicColors(true).SetRegions(true).SetWordWrap(true)
+	chatBox.SetBorder(true)
+	chatBox.SetTitle(" 💬 " + title + " ")
 
-	inputField := tview.NewInputField().
-		SetLabelColor(tcell.ColorWhite).
-		SetLabel("Message: ")
+	inputField := tview.NewInputField()
+	inputField.SetTitle(" Enter your message... ")
+	inputField.SetBorder(true)
+	inputField.SetTitleAlign(tview.AlignLeft)
+	inputField.SetFieldBackgroundColor(tcell.ColorBlack)
 
 	inputField.SetDoneFunc(func(key tcell.Key) {
 		if key == tcell.KeyEnter {
@@ -19,27 +23,14 @@ func (e *Engine) chatBox(idHub, title string) *tview.Flex {
 		}
 	})
 
-	sendButton := tview.NewButton("⌲").SetLabelColor(tcell.ColorWhite)
-	sendButton.SetBackgroundColor(tcell.ColorGreen)
-
-	inputFlex := tview.NewFlex().
-		AddItem(inputField, 0, 1, true).
-		AddItem(sendButton, 5, 0, false)
-
 	flex := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(chatBox, 0, 1, false).
-		AddItem(inputFlex, 1, 0, true)
-	flex.SetBorder(true)
+		AddItem(inputField, 3, 0, true)
 	e.setInputCapture(flex.Box, func() {
 		e.setFocus(e.chatCompLayout.Sidebar)
 	})
 
 	flex.SetTitle("💬 " + title)
-
-	sendButton.SetSelectedFunc(func() {
-		e.sendMessage(inputField, chatBox)
-	})
-
 	go func() {
 		for {
 			select {

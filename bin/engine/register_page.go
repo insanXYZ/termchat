@@ -13,7 +13,7 @@ func (e *Engine) register() tview.Primitive {
 
 	textview := tview.NewTextView().SetTextAlign(tview.AlignCenter)
 
-	textview.SetTextStyle(StyleTextView)
+	textview.SetTextStyle(styleTextView)
 
 	form := tview.NewForm().
 		AddInputField("Name", "", 40, nil, func(text string) {
@@ -34,19 +34,18 @@ func (e *Engine) register() tview.Primitive {
 
 			textview.SetText(resp.Message)
 
-			go func() {
-				e.app.QueueUpdateDraw(func() {
-					time.Sleep(1 * time.Second)
-					e.pages.SwitchToPage("login")
-				})
-			}()
+			e.queueUpdateDraw(func() {
+				time.Sleep(1 * time.Second)
+				e.pages.SwitchToPage("login")
+			})
 
 		}).
 		AddButton("Login ?", func() {
 			e.pages.SwitchToPage("login")
 		})
 
-	form.SetBorder(true).SetTitle("")
+	form.SetBorder(true)
+	form.SetTitle(" 📝 Register ")
 
 	return layout.Auth(form, textview, 11)
 }

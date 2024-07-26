@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-var StyleTextView = tcell.StyleDefault.Italic(true)
+var styleTextView = tcell.StyleDefault.Italic(true)
 
 type Engine struct {
 	app            *tview.Application
@@ -124,4 +124,10 @@ func (e *Engine) connectWebsocket() error {
 	e.conn = conn
 
 	return nil
+}
+
+func (e *Engine) queueUpdateDraw(f func()) {
+	go func() {
+		e.app.QueueUpdateDraw(f)
+	}()
 }
