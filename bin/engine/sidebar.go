@@ -2,15 +2,13 @@ package engine
 
 import (
 	"bin-term-chat/model"
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"strings"
 )
 
 func (e *Engine) listSidebar() *tview.List {
 	list := tview.NewList()
 	list.AddItem(" 🔎 Search friend ", "", 0, e.showModalSearchFriend)
-	list.AddItem(strings.Repeat(string(tcell.RuneHLine), 30), "", 0, nil)
+	list.AddItem("", "", 0, nil)
 	list.AddItem(" 🌎 global ", "", 0, e.switchChatBox("global"))
 	list.SetTitle(" 🍔 Menu ")
 	list.SetBorder(true)
