@@ -19,12 +19,13 @@ type ChatService struct {
 	Validator      *validator.Validate
 	Hub            *websocket.Hub
 	UserRepository *repository.UserRepository
+	ChatRepository *repository.ChatRepository
 }
 
-func NewChatService(DB *gorm.DB, viper *viper.Viper, validator *validator.Validate, userRepository *repository.UserRepository) *ChatService {
+func NewChatService(DB *gorm.DB, viper *viper.Viper, validator *validator.Validate, userRepository *repository.UserRepository, chatRepository *repository.ChatRepository) *ChatService {
 	hub := websocket.NewHub(DB, userRepository)
 	go hub.Run()
-	return &ChatService{DB: DB, Viper: viper, Validator: validator, Hub: hub, UserRepository: userRepository}
+	return &ChatService{DB: DB, Viper: viper, Validator: validator, Hub: hub, UserRepository: userRepository, ChatRepository: chatRepository}
 }
 
 func (service *ChatService) Chat(claims jwt.MapClaims, response http.ResponseWriter, request *http.Request) error {
@@ -43,10 +44,12 @@ func (service *ChatService) Chat(claims jwt.MapClaims, response http.ResponseWri
 	}
 
 	client := &websocket.Client{
-		Hub:  service.Hub,
-		User: user,
-		Conn: upgrade,
-		Send: make(chan *model.SendMessage),
+		ChatRepository: service.ChatRepository,
+		Hub:            service.Hub,
+		User:           user,
+		Conn:           upgrade,
+		Send:           make(chan *model.SendMessage),
+		DB:             service.DB,
 	}
 
 	client.Hub.Register <- client

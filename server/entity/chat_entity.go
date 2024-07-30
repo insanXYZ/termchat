@@ -6,7 +6,7 @@ import (
 )
 
 type Chat struct {
-	ID         string    `gorm:"primaryKey;column:id"`
+	ID         int       `gorm:"primaryKey;column:id;autoIncrement"`
 	Message    string    `gorm:"column:message"`
 	SenderID   string    `gorm:"column:sender_id"`
 	ReceiverID string    `gorm:"column:receiver_id"`

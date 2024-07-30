@@ -24,10 +24,11 @@ func (c *Configs) Run() {
 
 	// Repositories
 	userRepository := repository.NewUserRepository()
+	chatRepository := repository.NewChatRepository()
 
 	// Services
 	userService := service.NewUserService(c.Gorm, c.Viper, c.Validator, userRepository)
-	chatService := service.NewChatService(c.Gorm, c.Viper, c.Validator, userRepository)
+	chatService := service.NewChatService(c.Gorm, c.Viper, c.Validator, userRepository, chatRepository)
 
 	// Controllers
 

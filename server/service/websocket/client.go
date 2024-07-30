@@ -3,8 +3,10 @@ package websocket
 import (
 	"backend/entity"
 	"backend/model"
+	"backend/repository"
 	"encoding/json"
 	"github.com/gorilla/websocket"
+	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"time"
@@ -19,10 +21,12 @@ var Upgrader = websocket.Upgrader{
 }
 
 type Client struct {
-	Hub  *Hub
-	User *entity.User
-	Conn *websocket.Conn
-	Send chan *model.SendMessage
+	Hub            *Hub
+	User           *entity.User
+	Conn           *websocket.Conn
+	Send           chan *model.SendMessage
+	ChatRepository *repository.ChatRepository
+	DB             *gorm.DB
 }
 
 func (c *Client) ReadPump() {
@@ -76,10 +80,27 @@ func (c *Client) WritePump() {
 				log.Println(err.Error())
 			}
 
-			err = c.Conn.WriteMessage(websocket.TextMessage, marshal)
+			err = c.DB.Transaction(func(tx *gorm.DB) error {
+				if message.Type == "private" && message.Sender.ID == c.User.ID {
+					chat := &entity.Chat{
+						Message:    message.Message,
+						SenderID:   message.Sender.ID,
+						ReceiverID: message.Receiver.ID,
+					}
+
+					err := c.ChatRepository.Create(tx, chat)
+					if err != nil {
+						return err
+					}
+				}
+
+				return c.Conn.WriteMessage(websocket.TextMessage, marshal)
+			})
+
 			if err != nil {
 				log.Println(err.Error())
 			}
+
 		}
 	}
 }

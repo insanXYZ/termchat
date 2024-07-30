@@ -7,6 +7,7 @@ import (
 
 func (e *Engine) listSidebar() *tview.List {
 	list := tview.NewList()
+	list.AddItem(" 👤 Profile ", "", 0, nil)
 	list.AddItem(" 🔎 Search friend ", "", 0, e.showModalSearchFriend)
 	list.AddItem("", "", 0, nil)
 	list.AddItem(" 🌎 global ", "", 0, e.switchChatBox("global"))
@@ -30,7 +31,7 @@ func (e *Engine) listSidebar() *tview.List {
 				user := data.(model.User)
 
 				e.app.QueueUpdateDraw(func() {
-					list.AddItem(user.Name, "", 0, e.switchChatBox(user.ID))
+					list.AddItem(" 🗿 "+user.Name, "", 0, e.switchChatBox(user.ID))
 				})
 			}
 		}

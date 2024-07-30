@@ -120,7 +120,7 @@ func (service *UserService) GetUser(id string) (*entity.User, error) {
 
 	err = service.UserRepo.Take(service.DB, user)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("user with id " + id + " not found")
 	}
 
 	return user, nil
