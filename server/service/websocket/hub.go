@@ -74,11 +74,10 @@ func (h *Hub) Run() {
 					ID:   user.ID,
 				}
 
-				receiver, okR := h.Clients[message.Receiver]
-				sender, okS := h.Clients[message.Sender.ID]
-
-				if okR && okS {
+				if receiver, okR := h.Clients[message.Receiver]; okR {
 					receiver.Send <- sendObj
+				}
+				if sender, okS := h.Clients[message.Sender.ID]; okS {
 					sender.Send <- sendObj
 				}
 

@@ -7,6 +7,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/gorilla/websocket"
 	"github.com/rivo/tview"
+	"net/http"
 	"strings"
 )
 
@@ -116,7 +117,10 @@ func (e *Engine) connectWebsocket() error {
 		url = "wss://" + url
 	}
 
-	conn, _, err := websocket.DefaultDialer.Dial(url+"/api/chat?token="+e.token, nil)
+	header := http.Header{}
+	header.Add("Authorization", "bearer "+e.token)
+
+	conn, _, err := websocket.DefaultDialer.Dial(url+"/api/ws/chat", header)
 	if err != nil {
 		return err
 	}

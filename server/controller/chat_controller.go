@@ -14,7 +14,12 @@ func NewChatController(chatService *service.ChatService) *ChatController {
 	return &ChatController{ChatService: chatService}
 }
 
-func (controller *ChatController) Chat(c echo.Context) error {
+//
+//func (controller *ChatController) GetChat(c echo.Context) error {
+//
+//}
+
+func (controller *ChatController) WsChat(c echo.Context) error {
 	claims := c.Get("user").(jwt.MapClaims)
 	return controller.ChatService.Chat(claims, c.Response(), c.Request())
 }
