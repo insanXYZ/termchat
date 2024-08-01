@@ -18,11 +18,10 @@ func (c *RouteConfig) Setup() {
 	g := c.Echo.Group("/api")
 	g.POST("/register", c.UserController.Register)
 	g.POST("/login", c.UserController.Login)
-	//g.GET("/chat")
-	g.GET("/ws/chat", c.ChatController.WsChat, c.Middlewares.QueryParamToken)
 
-	user := g.Group("/user")
-	user.Use(c.Middlewares.JwtBase())
-	user.GET("", c.UserController.GetUser)
-
+	jwtGroup := g.Group("/")
+	jwtGroup.Use(c.Middlewares.JwtBase())
+	jwtGroup.GET("ws/chat", c.ChatController.WsChat)
+	jwtGroup.GET("user", c.UserController.GetUser)
+	jwtGroup.GET("chat", c.ChatController.GetChats)
 }

@@ -1,5 +1,13 @@
 package model
 
+type ChatResponse struct {
+	ID         int    `json:"id,omitempty"`
+	Message    string `json:"message,omitempty"`
+	SenderID   string `json:"sender_id,omitempty"`
+	ReceiverID string `json:"receiver_id,omitempty"`
+	Time       string `json:"time,omitempty"`
+}
+
 type ReadMessage struct {
 	Message  string `json:"message"`
 	Receiver string `json:"receiver"`

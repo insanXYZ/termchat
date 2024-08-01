@@ -55,37 +55,39 @@ func (e *Engine) readMessage() {
 			if readM.Type == model.MessageGlobal {
 				e.compHub["global"].Chan <- readM
 			} else if readM.Type == model.MessagePrivate {
-
-				set := setPrivateMessage{}
-
-				if readM.Sender.ID == e.user.ID {
-					set.id = readM.Receiver.ID
-					set.user = model.User{
-						Name: readM.Receiver.Name,
-						ID:   readM.Receiver.ID,
-					}
-				} else {
-					set.id = readM.Sender.ID
-					set.user = model.User{
-						Name: readM.Sender.Name,
-						ID:   readM.Sender.ID,
-					}
-				}
-
-				if _, ok := e.compHub[set.id]; !ok {
-					e.compHub[set.id] = model.CompHub{
-						Comp: e.chatBox(set.id, set.user.Name),
-						Chan: make(chan any),
-					}
-					e.compHub["sidebar"].Chan <- set.user
-				}
-
-				e.compHub[set.id].Chan <- readM
-
+				e.setPrivateMessage(readM)
 			}
 
 		}
 	}
+}
+
+func (e *Engine) setPrivateMessage(readM model.ReadMessage) {
+	set := setPrivateMessage{}
+
+	if readM.Sender.ID == e.user.ID {
+		set.id = readM.Receiver.ID
+		set.user = model.User{
+			Name: readM.Receiver.Name,
+			ID:   readM.Receiver.ID,
+		}
+	} else {
+		set.id = readM.Sender.ID
+		set.user = model.User{
+			Name: readM.Sender.Name,
+			ID:   readM.Sender.ID,
+		}
+	}
+
+	if _, ok := e.compHub[set.id]; !ok {
+		e.compHub[set.id] = model.CompHub{
+			Comp: e.chatBox(set.id, set.user.Name),
+			Chan: make(chan any),
+		}
+		e.compHub["sidebar"].Chan <- set.user
+	}
+
+	e.compHub[set.id].Chan <- readM
 }
 
 func (e *Engine) banner() *tview.Flex {
@@ -127,6 +129,32 @@ func (e *Engine) initChanCompChat() {
 	e.setChanHub("sidebar")
 	e.setChanHub("chat")
 	e.setCompHub("global", "global")
+
+	go func() {
+		chats, err := e.handler.GetChats(e.token)
+		if err != nil {
+			panic("1")
+		}
+
+		d := chats.Data.([]any)
+		for _, i := range d {
+			if v, ok := i.(map[string]interface{}); ok {
+				e.setPrivateMessage(model.ReadMessage{
+					Sender: &model.SenderMessage{
+						Name: v["sender"].(map[string]interface{})["name"].(string),
+						ID:   v["sender"].(map[string]interface{})["id"].(string),
+					},
+					Receiver: &model.ReceiverMessage{
+						Name: v["receiver"].(map[string]interface{})["name"].(string),
+						ID:   v["receiver"].(map[string]interface{})["id"].(string),
+					},
+					Message: v["message"].(string),
+					Time:    v["time"].(string),
+					Type:    model.MessagePrivate,
+				})
+			}
+		}
+	}()
 }
 
 func (e *Engine) chat() *tview.Flex {

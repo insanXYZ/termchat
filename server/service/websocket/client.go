@@ -72,7 +72,7 @@ func (c *Client) WritePump() {
 				Sender:   message.Sender,
 				Receiver: message.Receiver,
 				Message:  string(message.Message),
-				Time:     time.Now().Format("2006-1-2 15:4:5"),
+				Time:     time.Now().Format(time.DateTime),
 				Type:     message.Type,
 			})
 

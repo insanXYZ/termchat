@@ -60,3 +60,13 @@ func (service *ChatService) Chat(claims jwt.MapClaims, response http.ResponseWri
 	return nil
 
 }
+
+func (service *ChatService) GetChats(claims jwt.MapClaims) (*[]entity.Chat, error) {
+	chats := new([]entity.Chat)
+	err := service.ChatRepository.GetChats(service.DB, claims["sub"].(string), chats)
+	if err != nil {
+		return nil, err
+	}
+
+	return chats, nil
+}
