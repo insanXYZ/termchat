@@ -79,5 +79,20 @@ func (controller *UserController) GetUser(c echo.Context) error {
 		return httpresponse.Error(c, err.Error(), nil)
 	}
 
-	return httpresponse.Success(c, "success get user", converter.UserToGet(user))
+	return httpresponse.Success(c, "success get user", converter.UserToResponse(user))
+}
+
+func (controller *UserController) UpdateUser(c echo.Context) error {
+	claims := c.Get("user").(jwt.MapClaims)
+	req := new(model.UpdateUser)
+	err := c.Bind(req)
+	if err != nil {
+		return httpresponse.Error(c, "update user failed", nil)
+	}
+	user, err := controller.UserService.UpdateUser(claims, req)
+	if err != nil {
+		return httpresponse.Error(c, "update user failed", nil)
+	}
+
+	return httpresponse.Success(c, "success update user", converter.UserToResponse(user))
 }

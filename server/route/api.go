@@ -23,5 +23,6 @@ func (c *RouteConfig) Setup() {
 	jwtGroup.Use(c.Middlewares.JwtBase())
 	jwtGroup.GET("ws/chat", c.ChatController.WsChat)
 	jwtGroup.GET("user", c.UserController.GetUser)
+	jwtGroup.PUT("user", c.UserController.UpdateUser)
 	jwtGroup.GET("chat", c.ChatController.GetChats)
 }

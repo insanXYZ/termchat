@@ -10,6 +10,13 @@ func (e *Engine) modalSearchFriend() *tview.Flex {
 	inputField := tview.NewInputField()
 	result := tview.NewFlex()
 
+	textview := tview.NewTextView().SetText("-|-").SetTextAlign(tview.AlignCenter)
+	textview.SetBackgroundColor(tcell.ColorGray)
+
+	textviewError := tview.NewTextView().SetTextAlign(tview.AlignCenter)
+	textviewError.SetTextStyle(styleTextView)
+	textviewError.SetBackgroundColor(tcell.ColorGray)
+
 	inputField.SetFieldWidth(50)
 	inputField.SetFieldBackgroundColor(tcell.ColorDarkGrey)
 	inputField.SetPlaceholder("id...")
@@ -24,18 +31,17 @@ func (e *Engine) modalSearchFriend() *tview.Flex {
 			}
 
 			httpresp, err := e.handler.GetUserWithId(id, e.token)
+			if result.GetItemCount() > 0 {
+				result.RemoveItem(result.GetItem(0))
+			}
+
 			if err != nil {
-				if result.GetItemCount() > 0 {
-					result.RemoveItem(result.GetItem(0))
-				}
-				result.AddItem(tview.NewTextView().SetText(err.Error()), 0, 1, true)
+				result.AddItem(textviewError.SetText(err.Error()), 0, 1, false)
 				return
 			}
 
 			data := httpresp.Data.(map[string]interface{})
-			if result.GetItemCount() > 0 {
-				result.RemoveItem(result.GetItem(0))
-			}
+
 			result.AddItem(tview.NewButton(data["name"].(string)).SetSelectedFunc(func() {
 				e.setCompHub(id, data["name"].(string))
 				e.compHub["sidebar"].Chan <- model.User{
@@ -51,8 +57,8 @@ func (e *Engine) modalSearchFriend() *tview.Flex {
 	flex := tview.NewFlex()
 	flex.SetDirection(tview.FlexRow)
 	flex.AddItem(inputField, 1, 1, true)
-	flex.AddItem(tview.NewBox().SetBackgroundColor(tcell.ColorGrey), 1, 0, false) // Add this line for the gap
-	flex.AddItem(result, 0, 1, false)
+	flex.AddItem(tview.NewBox().SetBackgroundColor(tcell.ColorGrey), 1, 0, false)
+	flex.AddItem(result.AddItem(textview, 0, 1, false), 0, 1, false)
 
 	return flex
 
@@ -60,7 +66,7 @@ func (e *Engine) modalSearchFriend() *tview.Flex {
 
 func (e *Engine) showModalSearchFriend() {
 	modal := e.CreateModal(&modalConfig{
-		title:           "🔎 search friend",
+		title:           " 🔎 search friend ",
 		draggable:       false,
 		border:          true,
 		root:            e.modalSearchFriend(),

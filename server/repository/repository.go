@@ -20,3 +20,7 @@ func (r *Repository[T]) CountWhere(db *gorm.DB, where any, args ...any) int {
 	db.Model(new(T)).Where(where, args).Count(&count)
 	return int(count)
 }
+
+func (r *Repository[T]) Updates(db *gorm.DB, model *T, data *T) error {
+	return db.Model(model).Updates(data).Error
+}

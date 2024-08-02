@@ -120,44 +120,33 @@ func (service *UserService) GetUser(id string) (*entity.User, error) {
 
 	err = service.UserRepo.Take(service.DB, user)
 	if err != nil {
-		return nil, errors.New("user with id " + id + " not found")
+		return nil, errors.New("user not found")
 	}
 
 	return user, nil
 }
 
-func (service *UserService) ChatUsers(claims jwt.MapClaims, req *model.ChatUsers) (*entity.User, error) {
-	err := service.Validator.Struct(req)
+func (service *UserService) UpdateUser(claims jwt.MapClaims, req *model.UpdateUser) (*entity.User, error) {
+	user := &entity.User{
+		ID: claims["sub"].(string),
+	}
+
+	err := service.UserRepo.Take(service.DB, user)
 	if err != nil {
 		return nil, err
 	}
 
-	userReceiver := new(entity.User)
+	update := &entity.User{
+		Name:  req.Name,
+		Email: req.Email,
+		Bio:   req.Bio,
+	}
 
-	err = service.DB.Transaction(func(tx *gorm.DB) error {
-
-		userSender := &entity.User{
-			ID: claims["sub"].(string),
-		}
-
-		err := service.UserRepo.Take(tx, userSender)
-		if err != nil {
-			return err
-		}
-
-		userReceiver.ID = req.ID
-
-		err = service.UserRepo.Take(tx, userReceiver)
-		if err != nil {
-			return err
-		}
-
-		return service.UserRepo.AppendChatUsers(tx, userSender, userReceiver)
-	})
+	err = service.UserRepo.Updates(service.DB, user, update)
 	if err != nil {
 		return nil, err
 	}
 
-	return userReceiver, nil
+	return user, nil
 
 }

@@ -117,6 +117,7 @@ func (e *Engine) setInputCapture(box *tview.Box, f func()) {
 		}
 		return event
 	})
+
 }
 
 func (e *Engine) initChanCompChat() {
@@ -133,7 +134,7 @@ func (e *Engine) initChanCompChat() {
 	go func() {
 		chats, err := e.handler.GetChats(e.token)
 		if err != nil {
-			panic("1")
+			return
 		}
 
 		d := chats.Data.([]any)

@@ -18,7 +18,8 @@ type LoginUser struct {
 	Email    string `json:"email" validate:"required"`
 	Password string `json:"password" validate:"required"`
 }
-
-type ChatUsers struct {
-	ID string `json:"id" validate:"required"`
+type UpdateUser struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Bio   string `json:"bio"`
 }
