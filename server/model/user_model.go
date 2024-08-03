@@ -9,17 +9,18 @@ type UserResponse struct {
 }
 
 type RegisterUser struct {
-	Name     string `json:"name" validate:"required"`
-	Email    string `json:"email" validate:"required"`
-	Password string `json:"password" validate:"required"`
+	Name     string `json:"name" validate:"max=8,required"`
+	Email    string `json:"email" validate:"email,required"`
+	Password string `json:"password" validate:"min=8,required"`
 }
 
 type LoginUser struct {
-	Email    string `json:"email" validate:"required"`
-	Password string `json:"password" validate:"required"`
+	Email    string `json:"email" validate:"email,required"`
+	Password string `json:"password" validate:"min=8,required"`
 }
 type UpdateUser struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Bio   string `json:"bio"`
+	Name     string `json:"name" validate:"omitempty,max=8"`
+	Email    string `json:"email" validate:"omitempty,email"`
+	Bio      string `json:"bio" validate:"omitempty,max=20"`
+	Password string `json:"password" validate:"omitempty,min=8"`
 }

@@ -4,6 +4,7 @@ import (
 	"backend/entity"
 	"backend/model"
 	"backend/repository"
+	"backend/utils/valid"
 	"errors"
 	"time"
 
@@ -29,7 +30,7 @@ func NewUserService(DB *gorm.DB, viper *viper.Viper, validator *validator.Valida
 func (service *UserService) Register(req *model.RegisterUser) error {
 	err := service.Validator.Struct(req)
 	if err != nil {
-		return err
+		return valid.HandleValidatorStruct(err)
 	}
 
 	if count := service.UserRepo.CountWhere(service.DB, "email = ?", req.Email); count == 0 {
@@ -61,7 +62,7 @@ func (service *UserService) Register(req *model.RegisterUser) error {
 func (service *UserService) Login(req *model.LoginUser) (*entity.User, *string, error) {
 	err := service.Validator.Struct(req)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, valid.HandleValidatorStruct(err)
 	}
 
 	user := &entity.User{
@@ -127,11 +128,16 @@ func (service *UserService) GetUser(id string) (*entity.User, error) {
 }
 
 func (service *UserService) UpdateUser(claims jwt.MapClaims, req *model.UpdateUser) (*entity.User, error) {
+	err := service.Validator.Struct(req)
+	if err != nil {
+		return nil, valid.HandleValidatorStruct(err)
+	}
+
 	user := &entity.User{
 		ID: claims["sub"].(string),
 	}
 
-	err := service.UserRepo.Take(service.DB, user)
+	err = service.UserRepo.Take(service.DB, user)
 	if err != nil {
 		return nil, err
 	}
@@ -140,6 +146,15 @@ func (service *UserService) UpdateUser(claims jwt.MapClaims, req *model.UpdateUs
 		Name:  req.Name,
 		Email: req.Email,
 		Bio:   req.Bio,
+	}
+
+	if req.Password != "" {
+
+		password, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.MinCost)
+		if err != nil {
+			return nil, err
+		}
+		update.Password = string(password)
 	}
 
 	err = service.UserRepo.Updates(service.DB, user, update)
