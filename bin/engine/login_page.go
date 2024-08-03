@@ -22,6 +22,7 @@ func (e *Engine) login() tview.Primitive {
 		req.Password = text
 	})
 	form.AddButton("Login", func() {
+
 		resp, err := e.handler.Login(req)
 		if err != nil {
 			textview.SetText(err.Error())

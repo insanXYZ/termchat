@@ -13,9 +13,7 @@ func (h *Handler) Login(req *model.ReqLogin) (*model.Response, error) {
 		return nil, err
 	}
 
-	return h.NewRequest(http.MethodPost, h.Url+"/api/login", bytes.NewReader(marshal), func(request *http.Request) {
-		request.Header.Set("Content-Type", "application/json")
-	})
+	return h.NewRequest(http.MethodPost, h.Url+"/api/login", bytes.NewReader(marshal), nil)
 
 }
 
@@ -25,8 +23,6 @@ func (h *Handler) Register(req *model.ReqRegister) (*model.Response, error) {
 		return nil, err
 	}
 
-	return h.NewRequest(http.MethodPost, h.Url+"/api/register", bytes.NewReader(marshal), func(request *http.Request) {
-		request.Header.Set("Content-Type", "application/json")
-	})
+	return h.NewRequest(http.MethodPost, h.Url+"/api/register", bytes.NewReader(marshal), nil)
 
 }

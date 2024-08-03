@@ -78,6 +78,7 @@ func (e *Engine) setAuthEngine(data map[string]any) {
 		Name:  data["name"].(string),
 		Email: data["email"].(string),
 		ID:    data["id"].(string),
+		Bio:   data["bio"].(string),
 	}
 }
 

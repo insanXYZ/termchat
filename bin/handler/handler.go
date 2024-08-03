@@ -21,8 +21,12 @@ func (h *Handler) NewRequest(method, url string, body io.Reader, setRequest func
 	if err != nil {
 		return nil, err
 	}
+	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("Accept", "application/json")
 
-	setRequest(request)
+	if setRequest != nil {
+		setRequest(request)
+	}
 
 	client := http.Client{}
 	httpres, err := client.Do(request)

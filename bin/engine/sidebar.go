@@ -7,7 +7,7 @@ import (
 
 func (e *Engine) listSidebar() *tview.List {
 	list := tview.NewList()
-	list.AddItem(" 👤 Profile ", "", 0, nil)
+	list.AddItem(" 👤 Profile ", "", 0, e.showModalProfile)
 	list.AddItem(" 🔎 Search friend ", "", 0, e.showModalSearchFriend)
 	list.AddItem("", "", 0, nil)
 	list.AddItem(" 🌎 global ", "", 0, e.switchChatBox("global"))

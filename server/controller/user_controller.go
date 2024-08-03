@@ -87,11 +87,11 @@ func (controller *UserController) UpdateUser(c echo.Context) error {
 	req := new(model.UpdateUser)
 	err := c.Bind(req)
 	if err != nil {
-		return httpresponse.Error(c, "update user failed", nil)
+		return httpresponse.Error(c, err.Error(), nil)
 	}
 	user, err := controller.UserService.UpdateUser(claims, req)
 	if err != nil {
-		return httpresponse.Error(c, "update user failed", nil)
+		return httpresponse.Error(c, err.Error(), nil)
 	}
 
 	return httpresponse.Success(c, "success update user", converter.UserToResponse(user))
