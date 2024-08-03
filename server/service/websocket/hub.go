@@ -11,7 +11,6 @@ type Hub struct {
 	Clients        map[string]*Client
 	Broadcast      chan *model.BroadcastMessage
 	Register       chan *Client
-	Cache          map[string]*entity.User
 	Unregister     chan *Client
 	DB             *gorm.DB
 	UserRepository *repository.UserRepository
@@ -23,7 +22,6 @@ func NewHub(db *gorm.DB, repo *repository.UserRepository) *Hub {
 		Register:       make(chan *Client),
 		Unregister:     make(chan *Client),
 		Clients:        make(map[string]*Client),
-		Cache:          make(map[string]*entity.User),
 		DB:             db,
 		UserRepository: repo,
 	}
@@ -54,19 +52,12 @@ func (h *Hub) Run() {
 
 			} else {
 
-				if _, ok := h.Cache[message.Receiver]; !ok {
+				user := &entity.User{ID: message.Receiver}
 
-					cacheUsers := &entity.User{ID: message.Receiver}
-
-					err := h.UserRepository.Take(h.DB, cacheUsers)
-					if err != nil {
-						return
-					}
-
-					h.Cache[message.Receiver] = cacheUsers
+				err := h.UserRepository.Take(h.DB, user)
+				if err != nil {
+					return
 				}
-
-				user := h.Cache[message.Receiver]
 
 				sendObj.Type = "private"
 				sendObj.Receiver = &model.ReceiverMessage{

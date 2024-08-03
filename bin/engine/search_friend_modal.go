@@ -8,7 +8,11 @@ import (
 
 func (e *Engine) modalSearchFriend() *tview.Flex {
 	inputField := tview.NewInputField()
-	result := tview.NewFlex()
+	flex := tview.NewFlex()
+
+	e.setInputCapture(inputField.Box, func() {
+		e.setFocus(flex.GetItem(2))
+	})
 
 	textview := tview.NewTextView().SetText("-|-").SetTextAlign(tview.AlignCenter)
 	textview.SetBackgroundColor(tcell.ColorGray)
@@ -31,34 +35,49 @@ func (e *Engine) modalSearchFriend() *tview.Flex {
 			}
 
 			httpresp, err := e.handler.GetUserWithId(id, e.token)
-			if result.GetItemCount() > 0 {
-				result.RemoveItem(result.GetItem(0))
+			if flex.GetItemCount() > 2 {
+				flex.RemoveItem(flex.GetItem(2))
 			}
 
 			if err != nil {
-				result.AddItem(textviewError.SetText(err.Error()), 0, 1, false)
+				flex.AddItem(textviewError.SetText(err.Error()), 0, 1, false)
 				return
 			}
 
 			data := httpresp.Data.(map[string]interface{})
 
-			result.AddItem(tview.NewButton(data["name"].(string)).SetSelectedFunc(func() {
+			lbio := len(data["bio"].(string))
+			endBio := ""
+			if lbio > 20 {
+				lbio = 20
+				endBio = "..."
+			}
+
+			button := tview.NewButton(data["name"].(string) + " - " + data["bio"].(string)[:lbio] + endBio)
+			button.SetBackgroundColor(tcell.ColorBlue)
+			button.SetSelectedFunc(func() {
 				e.setCompHub(id, data["name"].(string))
-				e.compHub["sidebar"].Chan <- model.User{
-					Name: data["name"].(string),
-					ID:   data["id"].(string),
+				if _, ok := e.compHub[id]; !ok {
+					e.compHub["sidebar"].Chan <- model.User{
+						Name: data["name"].(string),
+						ID:   data["id"].(string),
+					}
 				}
 				e.switchChatBox(id)()
-			}), 0, 1, true)
+			})
+			e.setInputCapture(button.Box, func() {
+				e.setFocus(inputField)
+			})
+
+			flex.AddItem(button, 0, 1, true)
 
 		}
 	})
 
-	flex := tview.NewFlex()
 	flex.SetDirection(tview.FlexRow)
 	flex.AddItem(inputField, 1, 1, true)
 	flex.AddItem(tview.NewBox().SetBackgroundColor(tcell.ColorGrey), 1, 0, false)
-	flex.AddItem(result.AddItem(textview, 0, 1, false), 0, 1, false)
+	flex.AddItem(textview, 0, 1, false)
 
 	return flex
 
