@@ -73,13 +73,22 @@ func (controller *UserController) Refresh(c echo.Context) error {
 }
 
 func (controller *UserController) GetUser(c echo.Context) error {
-	queryId := c.QueryParam("id")
-	user, err := controller.UserService.GetUser(queryId)
+	req := new(model.GetUser)
+	err := c.Bind(req)
+	if err != nil {
+		return httpresponse.Error(c, err.Error(), nil)
+	}
+	users, err := controller.UserService.GetUser(req)
 	if err != nil {
 		return httpresponse.Error(c, err.Error(), nil)
 	}
 
-	return httpresponse.Success(c, "success get user", converter.UserToResponse(user))
+	res := make([]*model.UserResponse, len(*users))
+	for i, user := range *users {
+		res[i] = converter.UserToResponse(&user)
+	}
+
+	return httpresponse.Success(c, "success get user", res)
 }
 
 func (controller *UserController) UpdateUser(c echo.Context) error {

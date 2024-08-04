@@ -108,23 +108,28 @@ func (service *UserService) Refresh(claims jwt.MapClaims) (*string, error) {
 	return &signedString, nil
 }
 
-func (service *UserService) GetUser(id string) (*entity.User, error) {
+func (service *UserService) GetUser(req *model.GetUser) (*[]entity.User, error) {
 
-	err := service.Validator.Var(id, "required")
+	err := service.Validator.Struct(req)
 	if err != nil {
 		return nil, err
 	}
 
 	user := &entity.User{
-		ID: id,
+		ID:   req.ID,
+		Name: req.Name,
 	}
 
-	err = service.UserRepo.Take(service.DB, user)
+	users, err := service.UserRepo.FindGetUser(service.DB, user)
 	if err != nil {
-		return nil, errors.New("user not found")
+		return nil, err
 	}
 
-	return user, nil
+	if len(*users) == 0 {
+		return nil, errors.New("result not found")
+	}
+
+	return users, nil
 }
 
 func (service *UserService) UpdateUser(claims jwt.MapClaims, req *model.UpdateUser) (*entity.User, error) {

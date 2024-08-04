@@ -18,9 +18,15 @@ type LoginUser struct {
 	Email    string `json:"email" validate:"email,required"`
 	Password string `json:"password" validate:"min=8,required"`
 }
+
 type UpdateUser struct {
 	Name     string `json:"name" validate:"omitempty,max=8"`
 	Email    string `json:"email" validate:"omitempty,email"`
 	Bio      string `json:"bio" validate:"omitempty,max=20"`
 	Password string `json:"password" validate:"omitempty,min=8"`
+}
+
+type GetUser struct {
+	ID   string `query:"id" validate:"required_if=Name ''"`
+	Name string `query:"name" validate:"required_if=ID ''"`
 }

@@ -13,12 +13,13 @@ func NewUserRepository() *UserRepository {
 	return &UserRepository{}
 }
 
-func (repo *UserRepository) AppendChatUsers(db *gorm.DB, sender *entity.User, receiver *entity.User) error {
-	return db.Model(sender).Association("ChatUsers").Append(receiver)
-}
-
-func (repo *UserRepository) FindWithName(db *gorm.DB, name string) ([]entity.User, error) {
-	var users []entity.User
-	err := db.Where("name like = ?", "%"+name+"%").Find(&users).Error
+func (repo *UserRepository) FindGetUser(db *gorm.DB, req *entity.User) (*[]entity.User, error) {
+	users := new([]entity.User)
+	var err error
+	if req.ID != "" {
+		err = db.Where("id = ?", req.ID).Find(users).Error
+	} else if req.Name != "" {
+		err = db.Where("name like ?", "%"+req.Name+"%").Find(users).Error
+	}
 	return users, err
 }
