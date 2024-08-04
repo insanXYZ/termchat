@@ -23,7 +23,7 @@ func (e *Engine) modalSearchFriend() *tview.Flex {
 
 	inputField.SetFieldWidth(50)
 	inputField.SetFieldBackgroundColor(tcell.ColorDarkGrey)
-	inputField.SetPlaceholder("id...")
+	inputField.SetPlaceholder("#id or name")
 
 	inputField.SetPlaceholderTextColor(tcell.ColorDarkGreen)
 	inputField.SetDoneFunc(func(key tcell.Key) {
