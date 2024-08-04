@@ -28,13 +28,13 @@ func (e *Engine) modalSearchFriend() *tview.Flex {
 	inputField.SetPlaceholderTextColor(tcell.ColorDarkGreen)
 	inputField.SetDoneFunc(func(key tcell.Key) {
 		if key == tcell.KeyEnter {
-			id := inputField.GetText()
+			input := inputField.GetText()
 
-			if id == e.user.ID {
+			if input == "#"+e.user.ID || input == "" {
 				return
 			}
 
-			httpresp, err := e.handler.GetUserWithId(id, e.token)
+			httpresp, err := e.handler.GetUserWithId(input, e.token)
 			if flex.GetItemCount() > 2 {
 				flex.RemoveItem(flex.GetItem(2))
 			}
@@ -44,32 +44,27 @@ func (e *Engine) modalSearchFriend() *tview.Flex {
 				return
 			}
 
-			data := httpresp.Data.(map[string]interface{})
-
-			lbio := len(data["bio"].(string))
-			endBio := ""
-			if lbio > 20 {
-				lbio = 20
-				endBio = "..."
+			data := httpresp.Data.([]any)
+			list := tview.NewList()
+			for _, item := range data {
+				i := item.(map[string]any)
+				list.AddItem(i["name"].(string)+" - "+i["id"].(string), i["bio"].(string)+"\n", 0, func() {
+					if _, ok := e.compHub[i["id"].(string)]; !ok {
+						e.compHub["sidebar"].Chan <- model.User{
+							Name: i["name"].(string),
+							ID:   i["id"].(string),
+						}
+					}
+					e.setCompHub(i["id"].(string), i["name"].(string))
+					e.switchChatBox(i["id"].(string))()
+				})
 			}
 
-			button := tview.NewButton(data["name"].(string) + " - " + data["bio"].(string)[:lbio] + endBio)
-			button.SetBackgroundColor(tcell.ColorBlue)
-			button.SetSelectedFunc(func() {
-				e.setCompHub(id, data["name"].(string))
-				if _, ok := e.compHub[id]; !ok {
-					e.compHub["sidebar"].Chan <- model.User{
-						Name: data["name"].(string),
-						ID:   data["id"].(string),
-					}
-				}
-				e.switchChatBox(id)()
-			})
-			e.setInputCapture(button.Box, func() {
+			flex.AddItem(list, 0, 1, false)
+
+			e.setInputCapture(list.Box, func() {
 				e.setFocus(inputField)
 			})
-
-			flex.AddItem(button, 0, 1, true)
 
 		}
 	})
@@ -96,7 +91,7 @@ func (e *Engine) showModalSearchFriend() {
 			x:      0,
 			y:      0,
 			width:  50,
-			height: 7,
+			height: 10,
 		},
 	})
 	modal.SetBorderPadding(1, 1, 1, 1)
