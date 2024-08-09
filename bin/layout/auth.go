@@ -1,6 +1,9 @@
 package layout
 
-import "github.com/rivo/tview"
+import (
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
+)
 
 func Auth(comp, textview tview.Primitive, size int) tview.Primitive {
 	flex := tview.NewFlex().
@@ -10,6 +13,7 @@ func Auth(comp, textview tview.Primitive, size int) tview.Primitive {
 			AddItem(comp, size, 1, true).
 			AddItem(textview, 0, 1, false), 0, 1, true).
 		AddItem(tview.NewBox(), 0, 1, false)
+	flex.SetBackgroundColor(tcell.ColorBlack)
 
 	return flex
 }

@@ -18,7 +18,7 @@ func (e *Engine) modalSearchFriend() *tview.Flex {
 	textview.SetBackgroundColor(tcell.ColorGray)
 
 	textviewError := tview.NewTextView().SetTextAlign(tview.AlignCenter)
-	textviewError.SetTextStyle(styleTextView)
+	textviewError.SetTextStyle(tcell.StyleDefault.Italic(true))
 	textviewError.SetBackgroundColor(tcell.ColorGray)
 
 	inputField.SetFieldWidth(50)

@@ -4,14 +4,11 @@ import (
 	"bin-term-chat/handler"
 	"bin-term-chat/model"
 	"github.com/epiclabs-io/winman"
-	"github.com/gdamore/tcell/v2"
 	"github.com/gorilla/websocket"
 	"github.com/rivo/tview"
 	"net/http"
 	"strings"
 )
-
-var styleTextView = tcell.StyleDefault.Italic(true)
 
 type Engine struct {
 	app            *tview.Application

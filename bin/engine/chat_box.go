@@ -2,6 +2,7 @@ package engine
 
 import (
 	"bin-term-chat/model"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )

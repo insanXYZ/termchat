@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"bin-term-chat/component"
 	"bin-term-chat/layout"
 	"bin-term-chat/model"
 	"github.com/rivo/tview"
@@ -11,41 +12,52 @@ func (e *Engine) register() tview.Primitive {
 
 	req := new(model.ReqRegister)
 
-	textview := tview.NewTextView().SetTextAlign(tview.AlignCenter)
-
-	textview.SetTextStyle(styleTextView)
-
-	form := tview.NewForm().
-		AddInputField("Name", "", 40, nil, func(text string) {
+	notify := component.CreateTextViewNotified()
+	form := component.CreateForm(&component.Form{
+		Border:          true,
+		Title:           " 📝 Register ",
+		BackgroundColor: model.ColorBackgroundBase,
+	})
+	form.AddFormItem(component.CreateFormItem(&component.FormItem{
+		Label:      "Name",
+		FieldWidth: 40,
+		ChangedFunc: func(text string) {
 			req.Name = text
-		}).
-		AddInputField("Email", "", 40, nil, func(text string) {
+		},
+	}))
+	form.AddFormItem(component.CreateFormItem(&component.FormItem{
+		Label:      "Email",
+		FieldWidth: 40,
+		ChangedFunc: func(text string) {
 			req.Email = text
-		}).
-		AddPasswordField("Password", "", 40, '*', func(text string) {
+		},
+	}))
+	form.AddFormItem(component.CreateFormItem(&component.FormItem{
+		Label:      "Password",
+		FieldWidth: 40,
+		Mask:       '*',
+		ChangedFunc: func(text string) {
 			req.Password = text
-		}).
-		AddButton("Register", func() {
-			resp, err := e.handler.Register(req)
-			if err != nil {
-				textview.SetText(err.Error())
-				return
-			}
+		},
+	}))
+	form.AddButton("Register", func() {
+		resp, err := e.handler.Register(req)
+		if err != nil {
+			notify.SetText(err.Error())
+			return
+		}
 
-			textview.SetText(resp.Message)
+		notify.SetText(resp.Message)
 
-			e.queueUpdateDraw(func() {
-				time.Sleep(1 * time.Second)
-				e.pages.SwitchToPage("login")
-			})
-
-		}).
-		AddButton("Login ?", func() {
+		e.queueUpdateDraw(func() {
+			time.Sleep(1 * time.Second)
 			e.pages.SwitchToPage("login")
 		})
 
-	form.SetBorder(true)
-	form.SetTitle(" 📝 Register ")
+	})
+	form.AddButton("Login ?", func() {
+		e.pages.SwitchToPage("login")
+	})
 
-	return layout.Auth(form, textview, 11)
+	return layout.Auth(form, notify, 11)
 }
