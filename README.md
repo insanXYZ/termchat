@@ -7,5 +7,11 @@ You can visit to [releases page](https://github.com/insanXYZ/termchat/releases),
 
 ## Usage
 ```sh
-  ./termchat -url https://xxxxxxx
+termchat -url https://exampleserver.com
 ```
+if you want to run the server, you can use [server folder on repo](https://github.com/insanXYZ/termchat/tree/main/server) 
+
+1. ```cd server/```
+2. ```go mod tidy```
+3. rename config.env.example to config.env and set in here
+4. ```go run main.go```
