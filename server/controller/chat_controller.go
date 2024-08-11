@@ -5,6 +5,7 @@ import (
 	"backend/model/converter"
 	"backend/service"
 	"backend/utils/httpresponse"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 )
@@ -21,7 +22,7 @@ func (controller *ChatController) GetChats(c echo.Context) error {
 	claims := c.Get("user").(jwt.MapClaims)
 	chats, err := controller.ChatService.GetChats(claims)
 	if err != nil {
-		return httpresponse.Error(c, err.Error(), nil)
+		return httpresponse.Error(c, err, nil)
 	}
 
 	res := make([]*model.WriteMessage, 0)

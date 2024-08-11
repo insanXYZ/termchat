@@ -3,22 +3,23 @@ package middleware
 import (
 	"backend/utils/httpresponse"
 	"errors"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/labstack/echo/v4"
 	"strings"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/labstack/echo/v4"
 )
 
 func (config *MiddlewareConfig) Refresh(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		header := c.Request().Header.Get("Authorization")
 		if header == "" {
-			return httpresponse.Error(c, "wrong header", nil)
+			return httpresponse.Error(c, errors.New("wrong header"), nil)
 		}
 
 		tokenParts := strings.Split(header, " ")
 		if len(tokenParts) != 2 || strings.EqualFold(tokenParts[0], "Bearer") {
-			return httpresponse.Error(c, "wrong format authorization", nil)
+			return httpresponse.Error(c, errors.New("wrong format authorization"), nil)
 		}
 
 		token := tokenParts[1]
@@ -40,10 +41,10 @@ func (config *MiddlewareConfig) Refresh(next echo.HandlerFunc) echo.HandlerFunc 
 				})
 				return next(c)
 			}
-			return httpresponse.Error(c, err.Error(), nil, 400)
+			return httpresponse.Error(c, err, nil, 400)
 		}
 
-		return httpresponse.Error(c, "token not expired", nil, 400)
+		return httpresponse.Error(c, errors.New("token not expired"), nil, 400)
 
 	}
 }

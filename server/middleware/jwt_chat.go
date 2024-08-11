@@ -3,6 +3,7 @@ package middleware
 import (
 	"backend/utils/httpresponse"
 	"errors"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 )
@@ -11,7 +12,7 @@ func (config *MiddlewareConfig) QueryParamToken(next echo.HandlerFunc) echo.Hand
 	return func(c echo.Context) error {
 		token := c.QueryParam("token")
 		if token == "" {
-			return httpresponse.Error(c, "authorization failed", nil)
+			return httpresponse.Error(c, errors.New("Authoriztion failed"), nil)
 		}
 
 		claims := jwt.MapClaims{}
@@ -24,7 +25,7 @@ func (config *MiddlewareConfig) QueryParamToken(next echo.HandlerFunc) echo.Hand
 		})
 
 		if err != nil {
-			return httpresponse.Error(c, "authorization failed", nil)
+			return httpresponse.Error(c, errors.New("authoriztion failed"), nil)
 		}
 
 		c.Set("user", claims)

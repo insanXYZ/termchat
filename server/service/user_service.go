@@ -71,12 +71,12 @@ func (service *UserService) Login(req *model.LoginUser) (*entity.User, *string, 
 
 	err = service.UserRepo.Take(service.DB, user)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.New("username or password wrong")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.New("username or password wrong")
 	}
 
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -87,7 +87,7 @@ func (service *UserService) Login(req *model.LoginUser) (*entity.User, *string, 
 
 	signedString, err := claims.SignedString([]byte(service.Viper.GetString("JWT_SECRET_KEY")))
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.New("username or password wrong")
 	}
 
 	return user, &signedString, nil
